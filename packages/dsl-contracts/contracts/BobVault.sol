@@ -2,23 +2,25 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "./interfaces/AggregatorV3Interface.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/external/IWETH9.sol";
+import "./interfaces/IWETH9.sol";
+import "./WeatherDonar.sol";
 
-contract BobVault is Ownable {
+contract BobVault is Ownable, WeatherDonar {
     int256 internal constant THRESHOLD = 120000000000;
 
     AggregatorV3Interface internal immutable aggregator;
     ISwapRouter internal immutable router;
 
     IWETH9 internal immutable WETH9;
-    address internal immutable USDC;
+    IERC20 internal immutable USDC;
 
     error InvalidStopLoss();
 
-    constructor(AggregatorV3Interface _aggregator, ISwapRouter _router, IWETH9 _weth, address _usdc)
+    constructor(AggregatorV3Interface _aggregator, ISwapRouter _router, IWETH9 _weth, IERC20 _usdc)
         Ownable(msg.sender)
     {
         aggregator = _aggregator;
@@ -40,32 +42,43 @@ contract BobVault is Ownable {
         return false;
     }
 
-    function stopLoss() public onlyOwner {
+    function stopLoss() external onlyOwner {
         if (!shouldStopLoss()) {
             revert InvalidStopLoss();
         }
+        _swap();
     }
 
-    function withdraw(address _token) public {}
+    function withdrawETH(uint256 _amount) external onlyOwner {
+        (bool success,) = msg.sender.call{value: _amount}("");
+        require(success, "BobVault: Failed to send Ether");
+    }
+
+    function withdraw(address _token, uint256 _amount) external onlyOwner {
+        IERC20(_token).transfer(msg.sender, _amount);
+    }
 
     function _swap() internal {
-        if (address(this).balance > 0) {
-            WETH9.deposit(address(this).balance);
+        // Wrap ETH if any
+        uint256 _balance = address(this).balance;
+        if (_balance > 0) {
+            WETH9.deposit{value: _balance}();
         }
 
-        uint256 balance = WETH9.balanceOf(this);
+        // Reuse the _balance variables for WETH balance
+        _balance = WETH9.balanceOf(address(this));
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: WETH9,
-            tokenOut: USDC,
-            fee: poolFee,
+            tokenIn: address(WETH9),
+            tokenOut: address(USDC),
+            fee: 3000,
             recipient: msg.sender,
             deadline: block.timestamp,
-            amountIn: balance,
+            amountIn: _balance,
             amountOutMinimum: 0,
             sqrtPriceLimitX96: 0
         });
 
         // The call to `exactInputSingle` executes the swap.
-        amountOut = swapRouter.exactInputSingle(params);
+        router.exactInputSingle(params);
     }
 }
