@@ -20,13 +20,11 @@ contract BobVault is Ownable, WeatherDonar {
 
     error InvalidStopLoss();
 
-    constructor(AggregatorV3Interface _aggregator, ISwapRouter _router, IWETH9 _weth, IERC20 _usdc)
-        Ownable(msg.sender)
-    {
-        aggregator = _aggregator;
-        router = _router;
-        WETH9 = _weth;
-        USDC = _usdc;
+    constructor(address _aggregator, address _router, address _weth, address _usdc) Ownable(msg.sender) {
+        aggregator = AggregatorV3Interface(_aggregator);
+        router = ISwapRouter(_router);
+        WETH9 = IWETH9(_weth);
+        USDC = IERC20(_usdc);
     }
 
     function shouldStopLoss() public view returns (bool) {

@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "forge-std/Test.sol";
+import {BaseSetup} from "./setup/BaseSetup.t.sol";
+import "../contracts/BobVault.sol";
+import "../contracts/mock/MockPriceOracle.sol";
 
-contract ContractBTest is Test {
-    uint256 testNumber;
+contract BobVaultTest is BaseSetup {
+    BobVault internal vault;
 
-    function setUp() public {
-        testNumber = 42;
+    function setUp() public override {
+        BaseSetup.setUp();
+        vault = new BobVault(address(oracle), address(router), address(weth), address(usdc));
     }
 
-    function test_NumberIs42() public {
-        assertEq(testNumber, 42);
-    }
-
-    function testFail_Subtract43() public {
-        testNumber -= 43;
+    function test_NotStopLoss() public {
+        oracle.setRoundData(MockPriceOracle.RoundData(3000, 0, 0));
     }
 }
