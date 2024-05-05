@@ -1,41 +1,48 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {AggregatorV3Interface} from "./interfaces/AggregatorV3Interface.sol";
+import {IChainlinkProxy} from "./interfaces/IChainlinkProxy.sol";
+import {IChainlinkAggregator} from "./interfaces/IChainlinkAggregator.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "./interfaces/IWETH9.sol";
 import "./WeatherDonar.sol";
 
-contract BobVault is Ownable, WeatherDonar {
+contract BobVault is WeatherDonar {
     int256 internal constant THRESHOLD = 120000000000;
-
-    AggregatorV3Interface internal immutable aggregator;
-    ISwapRouter internal immutable router;
-
-    IWETH9 internal immutable WETH9;
-    IERC20 internal immutable USDC;
 
     error InvalidStopLoss();
 
-    constructor(address _aggregator, address _router, address _weth, address _usdc) Ownable(msg.sender) {
-        aggregator = AggregatorV3Interface(_aggregator);
-        router = ISwapRouter(_router);
-        WETH9 = IWETH9(_weth);
-        USDC = IERC20(_usdc);
-    }
+    constructor(address _proxy, address _router, address _charity, address _weatherOracle, address _weth, address _usdc)
+        WeatherDonar(_proxy, _router, _charity, _weatherOracle, _weth, _usdc)
+    {}
 
     function shouldStopLoss() public view returns (bool) {
-        (uint80 _roundId, int256 _answer,, uint256 _updatedAt,) = aggregator.latestRoundData();
-
+        (uint80 _roundId, int256 _answer,, uint256 _updatedAt,) = proxy.latestRoundData();
+        (uint16 _phaseId, uint64 _aggregatorRoundId) = decodeRoundId(_roundId);
         do {
-            if (_answer < THRESHOLD) {
+            if (_answer <= THRESHOLD) {
                 return true;
             }
-            (_roundId, _answer,, _updatedAt,) = aggregator.getRoundData(_roundId - 1);
-        } while (_updatedAt + 1800 >= block.timestamp);
+
+            if (_aggregatorRoundId == 1) {
+                // Reached the earliest round our current Aggregator.
+                // Move to the previous Aggregator to check whether it should stop loss.
+                _phaseId -= 1;
+                IChainlinkAggregator _prevAggregator = IChainlinkAggregator(proxy.phaseAggregators(_phaseId));
+                if (address(_prevAggregator) == address(0)) {
+                    return false;
+                }
+
+                _aggregatorRoundId = uint64(_prevAggregator.latestRound());
+                (_roundId, _answer,, _updatedAt,) = proxy.getRoundData(encodeRoundId(_phaseId, _aggregatorRoundId));
+            } else {
+                // Looping over aggregator round id
+                (_roundId, _answer,, _updatedAt,) = proxy.getRoundData(_roundId - 1);
+                _aggregatorRoundId -= 1;
+            }
+        } while (_updatedAt + 1800 >= block.timestamp); // Stop the loop if updatedAt is no longer within 30 minutes
 
         return false;
     }
@@ -76,7 +83,19 @@ contract BobVault is Ownable, WeatherDonar {
             sqrtPriceLimitX96: 0
         });
 
+        // Approve router to transfer
+        TransferHelper.safeApprove(address(WETH9), address(router), _balance);
+
         // The call to `exactInputSingle` executes the swap.
         router.exactInputSingle(params);
+    }
+
+    function decodeRoundId(uint80 _roundId) public pure returns (uint16 _phaseId, uint64 _aggregatorRoundId) {
+        _phaseId = uint16(_roundId >> 64);
+        _aggregatorRoundId = uint64(_roundId);
+    }
+
+    function encodeRoundId(uint16 _phaseId, uint64 _aggregatorRoundId) public pure returns (uint80 _roundId) {
+        _roundId = uint80(uint256(_phaseId) << 64 | _aggregatorRoundId);
     }
 }

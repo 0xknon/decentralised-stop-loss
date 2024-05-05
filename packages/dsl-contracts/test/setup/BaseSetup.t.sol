@@ -4,46 +4,43 @@ pragma solidity ^0.8.24;
 import "forge-std/Test.sol";
 import "../../contracts/mock/MockERC20.sol";
 import "../../contracts/mock/WETH9.sol";
-import "../../contracts/mock/MockPriceOracle.sol";
+import "../../contracts/mock/MockChainlinkProxy.sol";
 import "../../contracts/mock/MockUniswapRouter.sol";
 
 contract BaseSetup is Test {
     MockERC20 public usdc;
     WETH9 public weth;
 
-    address public owner;
+    address public dev;
     address public bob;
+    address public charity;
 
-    MockPriceOracle public oracle;
+    MockChainlinkProxy public proxy;
     MockUniswapRouter public router;
 
     function setUp() public virtual {
         weth = new WETH9();
         usdc = new MockERC20();
-        oracle = new MockPriceOracle();
-        router = new MockUniswapRouter(address(weth), address(usdc));
+        proxy = new MockChainlinkProxy();
+        router = new MockUniswapRouter();
 
-        owner = vm.addr(1);
+        dev = vm.addr(1);
         bob = vm.addr(2);
-
-        _fundRouter();
-        _fundBob();
+        charity = vm.addr(3);
     }
 
-    function _fundRouter() private {
-        vm.deal(owner, 1000 ether);
+    function _fundRouter(uint256 _amount) internal {
+        usdc.mint(address(router), _amount);
+    }
 
-        vm.startPrank(owner);
+    // Fund the vault with 1000 ETH & 1000 WETH
+    function _fundVault(address _vault) internal {
+        vm.startPrank(bob);
+        vm.deal(bob, 1000 ether);
         weth.deposit{value: 1000 ether}();
-        weth.transfer(address(router), 1000 ether);
+        weth.transfer(_vault, 1000 ether);
+
+        vm.deal(_vault, 1000 ether);
         vm.stopPrank();
-
-        usdc.mint(address(router), 1000 ether);
-    }
-
-    function _fundBob() private {
-        vm.deal(bob, 2000 ether);
-        vm.prank(bob);
-        weth.deposit{value: 1000 ether}();
     }
 }

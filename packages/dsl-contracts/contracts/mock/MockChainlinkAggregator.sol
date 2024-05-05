@@ -2,16 +2,17 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/AggregatorV3Interface.sol";
+import "../interfaces/IChainlinkAggregator.sol";
 
-contract MockPriceOracle is AggregatorV3Interface {
+contract MockChainlinkAggregator is IChainlinkAggregator {
     struct RoundData {
         int256 answer;
         uint256 startedAt;
         uint256 updatedAt;
     }
 
-    uint80 public currentRoundId;
+    uint256 public latestRound;
+
     mapping(uint80 => RoundData) public rounds;
 
     function decimals() external pure returns (uint8) {
@@ -44,16 +45,16 @@ contract MockPriceOracle is AggregatorV3Interface {
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        RoundData memory data = rounds[currentRoundId];
-        roundId = currentRoundId;
+        RoundData memory data = rounds[uint80(latestRound)];
+        roundId = uint80(latestRound);
         answer = data.answer;
         startedAt = data.startedAt;
         updatedAt = data.updatedAt;
-        answeredInRound = currentRoundId;
+        answeredInRound = uint80(latestRound);
     }
 
-    function setRoundData(RoundData calldata _data) external {
-        currentRoundId += 1;
-        rounds[currentRoundId] = _data;
+    function setRoundData(uint80 _roundId, RoundData calldata _data) external {
+        latestRound = _roundId;
+        rounds[_roundId] = _data;
     }
 }
