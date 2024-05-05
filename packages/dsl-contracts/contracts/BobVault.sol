@@ -47,7 +47,7 @@ contract BobVault is WeatherDonar {
         return false;
     }
 
-    function stopLoss() external onlyOwner {
+    function stopLoss() external {
         if (!shouldStopLoss()) {
             revert InvalidStopLoss();
         }

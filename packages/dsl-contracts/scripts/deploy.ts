@@ -5,6 +5,8 @@ import { BobVault } from "../typechain";
 import { isAddress } from "viem";
 
 const main = async () => {
+  const [owner] = await ethers.getSigners();
+
   const proxy = await ethers.deployContract("MockChainlinkProxy");
   console.log("MockChainlinkProxy", proxy.target);
 
@@ -26,8 +28,10 @@ const main = async () => {
   const usdc = await ethers.deployContract("MockERC20");
   console.log("USDC", usdc.target);
 
-  // const BobVaultFC = await ethers.getContractFactory("BobVault");
-  // const vault = await BobVaultFC.deploy();
+  const BobVaultFC = await ethers.getContractFactory("BobVault");
+  const vault = await BobVaultFC.deploy(proxy.target, router.target, owner.address, weatherOracle.target, weth.target, usdc.target);
+
+  console.log("BobVault", vault.target);
 };
 
 main()

@@ -23,7 +23,7 @@ const config: HardhatUserConfig = {
     flat: true,
     // only: [":ERC20$"],
     spacing: 2,
-    pretty: true,
+    pretty: false,
     // format: "minimal",
   },
 };

@@ -17,6 +17,8 @@ contract WeatherDonar is DateTimeFormatter, Ownable, Storage {
         Ownable(msg.sender)
     {}
 
+    receive() external payable {}
+
     function requestData() public {
         bytes memory ancillaryData = getTodayAncillaryData();
         require(dataRequestTime[ancillaryData] == 0, "WeatherDonar: Requested");

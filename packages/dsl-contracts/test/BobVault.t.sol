@@ -131,17 +131,6 @@ contract BobVaultTest is BaseSetup {
         vm.stopPrank();
     }
 
-    function testFuzz_RevertStopLossWhenNotStoppedByOwner(int256 price, uint256 updatedAt) public {
-        vm.startPrank(dev);
-        MockChainlinkAggregator _aggregator = new MockChainlinkAggregator();
-        proxy.setAggregator(1, address(_aggregator));
-
-        _aggregator.setRoundData(1, MockChainlinkAggregator.RoundData(price, updatedAt, updatedAt));
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, dev));
-        vault.stopLoss();
-        vm.stopPrank();
-    }
-
     function test_RevertNonOwnerWithdrawal() public {
         // vm.expectRevert(bytes("error message"));
         vm.startPrank(dev);
