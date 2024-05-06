@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  // output: basePath === '' ? 'standalone': "export",
+  output: 'export',
   // basePath: basePath || '',
   compiler: {
     // Enables the styled-components SWC transform

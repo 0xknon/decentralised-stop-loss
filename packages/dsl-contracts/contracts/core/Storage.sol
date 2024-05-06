@@ -10,13 +10,13 @@ import "../interfaces/IWETH9.sol";
 import "../interfaces/OptimisticOracleV2Interface.sol";
 
 contract Storage {
-    address internal immutable charity;
-    OptimisticOracleV2Interface internal immutable weatherOracle;
-    IChainlinkProxy internal immutable proxy;
-    ISwapRouter internal immutable router;
+    address public immutable charity;
+    OptimisticOracleV2Interface public immutable weatherOracle;
+    IChainlinkProxy public immutable proxy;
+    ISwapRouter public immutable router;
 
-    IWETH9 internal immutable WETH9;
-    IERC20 internal immutable USDC;
+    IWETH9 public immutable WETH9;
+    IERC20 public immutable USDC;
 
     constructor(
         address _proxy,

@@ -1,5 +1,5 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { ethers } from "hardhat";
+import { ethers, run } from "hardhat";
 import {} from "typechain";
 import { BobVault } from "../typechain";
 import { isAddress } from "viem";
@@ -32,6 +32,7 @@ const main = async () => {
   const vault = await BobVaultFC.deploy(proxy.target, router.target, owner.address, weatherOracle.target, weth.target, usdc.target);
 
   console.log("BobVault", vault.target);
+  await vault.waitForDeployment();
 };
 
 main()

@@ -9,19 +9,25 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.3.7",
+    "@ant-design/plots": "^2.2.1",
     "@dsl/contracts": "*",
     "@rainbow-me/rainbowkit": "^2.0.6",
     "@tanstack/react-query": "^5.34.1",
     "antd": "^5.17.0",
+    "dayjs": "^1.11.11",
     "next": "14.2.3",
+    "ramda": "^0.30.0",
     "react": "^18",
     "react-dom": "^18",
+    "recharts": "^2.12.6",
     "styled-components": "^6.1.9",
     "viem": "2.x",
     "wagmi": "^2.8.1"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/ramda": "^0.30.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",

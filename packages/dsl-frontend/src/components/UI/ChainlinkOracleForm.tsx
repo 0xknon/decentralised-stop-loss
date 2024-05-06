@@ -41,7 +41,7 @@ const ChainlinkOracleForm: FC<ChainlinkOracleFormProps> = ({ }) => {
       functionName: 'setRoundData',
       args: [
         roundId + BigInt(1),
-        [parseUnits(answer.toString(), 6), ts, ts]
+        [parseUnits(answer.toString(), 8), ts, ts]
       ]
     })
   }, [client, writeContract])

@@ -58,11 +58,12 @@ contract BobVaultTest is BaseSetup {
             }
         }
 
+        // USDC balance of vault before stop loss should be 0
+        assertEq(usdc.balanceOf(address(vault)), 0);
+
         // Bob wants to check Stop Loss
-        vm.startPrank(bob);
         assertEq(vault.shouldStopLoss(), true);
         vault.stopLoss();
-        vm.stopPrank();
 
         // The vault should have 2400 USDC
         assertEq(usdc.balanceOf(address(vault)), usdAmountToReceive);

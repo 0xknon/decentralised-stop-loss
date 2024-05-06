@@ -1,15 +1,20 @@
 import { deploy } from "@/utils";
-import { Typography, Card, Col, Collapse, Form, Input, Menu, MenuProps, Row, Spin, Modal, Button, Table, TableProps, Tooltip, Badge } from "antd";
+import { Typography, Card, Col, Collapse, Form, Input, Menu, MenuProps, Row, Spin, Modal, Button, Table, TableProps, Tooltip, Badge, Divider } from "antd";
 import { useCallback, useMemo, useState } from "react";
 import styled from "styled-components";
-import { useAccount, useBalance, useWalletClient, useWriteContract } from "wagmi";
+import { useAccount, useBalance, useReadContract, useWalletClient, useWriteContract } from "wagmi";
 import { addresses } from "@/constants";
-import { formatEther, parseEther } from "viem";
+import { formatEther, formatUnits, parseEther } from "viem";
 import VaultDepositButton from "@/components/UI/VaultDepositButton";
 import StopLossStatus from "@/components/UI/StopLossStatus";
 import ChainlinkOracleForm from "@/components/UI/ChainlinkOracleForm";
+import UsdcFaucetForm from "@/components/UI/UsdcFaucetForm";
+import MockUniswapBalance from "@/components/UI/MockUniswapBalance";
+import PriceChart from "@/components/UI/PriceChart";
+import StopLossButton from "@/components/UI/StopLossButton";
+import MockERC20_ABI from '@dsl/contracts/abis/MockERC20.json';
 
-const { Text } = Typography
+const { Title, Text } = Typography
 
 const VaultCard = styled(Card)`
   .ant-card-body {
@@ -26,29 +31,42 @@ const PageWrapper = styled.div`
 `
 
 export default function Home() {
-  const { } = useAccount()
-  const { isPending, writeContract } = useWriteContract()
   const { data: balance } = useBalance({ address: addresses.vault as `0x${string}` })
-  console.log(balance)
-  const handleDeploy = useCallback(() => {
-    // client.depl
-  }, [])
+  const { isPending, data, refetch } = useReadContract({
+    abi: MockERC20_ABI,
+    address: addresses.usdc as `0x${string}`,
+    functionName: 'balanceOf',
+    args: [
+      addresses.vault as `0x${string}`
+    ]
+  })
+
   return (
     <PageWrapper>
       <Row gutter={[12, 12]}>
-        <Col span={12}>
+        <Col span={14}>
           <VaultCard title="Bob Vault" extra={<VaultDepositButton />}>
-            <div>
-              <Text strong>Balance: {formatEther(balance?.value || BigInt(0))} {balance?.symbol}</Text>
+            <div style={{ width: '100%', height: 300 }}>
+              <PriceChart />
             </div>
-            <div>
-              <StopLossStatus />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <Text strong>Vault Balance: </Text>
+                <Text >{formatEther(balance?.value || BigInt(0))} {balance?.symbol}</Text>
+                <Text >{formatUnits(data as bigint || BigInt(0), 6)} USDC</Text>
+                <StopLossStatus />
+              </div>
+              <StopLossButton />
             </div>
           </VaultCard>
         </Col>
-        <Col span={12}>
+        <Col span={10}>
           <Card title="Mock Resources">
             <ChainlinkOracleForm />
+            <Divider />
+            <UsdcFaucetForm />
+            <Divider />
+            <MockUniswapBalance />
           </Card>
         </Col>
       </Row>
