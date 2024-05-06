@@ -34,7 +34,7 @@ In order to have a cleaner implementations, it is seperated into two seperated c
 
 Remark: `BobVault` is inheriting `WeatherDonar`
 
-Assuming there will be a cron job executing a script every minute and the script is located at [./scripts/cron.ts](./scripts/cron.ts).
+It is assumed that there will be a cron job executing a script every minute and the script is located at [./scripts/cron.ts](./scripts/cron.ts).
 
 ## Decisions
 
